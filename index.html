@@ -42,9 +42,18 @@ td{padding:4px 5px;border-bottom:1px solid #30363d22}
 <script>
 try{
 
-var S={tab:"dashboard",leeftijd:40,levensverwachting:90,huidigeBTC:0,maandelijksDCA:100,btcPrijsEUR:66000,eurUsd:1.164,prijsModel:"moderate",customGroei:20,inkomenZelf:0,inkomenPartner:0,hypotheekMaand:0,hypotheekAflossingsvrij:0,hypotheekJarenRest:0,hypotheekSchuld:0,kindUitHuisLeeftijd:24,kostenPerKindMaand:350,aantalKinderen:0,aowBrutoJaar:14379,aowLeeftijd:67.25,pensioenWerkgever:0,pensioenWerkgeverLeeftijd:68,partnerLeeftijd:40,partnerAowBrutoJaar:0,partnerAowLeeftijd:67.25,partnerPensioenWerkgever:0,partnerPensioenWerkgeverLeeftijd:68,partnerPensioenExtra:0,partnerPensioenExtraLeeftijd:68,box3Drempel:57000,box3Fictief:6.04,box3Tarief:36,inflatie:3,onttrekkingsPct:3.5,extraDCA:0,eenmaligBTC:0,loonsverhogingPct:0};
-try{var saved=localStorage.getItem("btc_planner");if(saved){var parsed=JSON.parse(saved);for(var k in parsed){if(k in S)S[k]=parsed[k];}}}catch(e){}
-function save(){try{localStorage.setItem("btc_planner",JSON.stringify(S));}catch(e){}}
+var S={tab:"dashboard",leeftijd:51,levensverwachting:95,huidigeBTC:0.13,maandelijksDCA:230,btcPrijsEUR:66000,eurUsd:1.164,prijsModel:"powerlaw",customGroei:20,inkomenZelf:2500,inkomenPartner:2800,hypotheekMaand:900,hypotheekAflossingsvrij:250,hypotheekJarenRest:27,hypotheekSchuld:287429,kindUitHuisLeeftijd:24,kostenPerKindMaand:350,aantalKinderen:6,aowBrutoJaar:14379,aowLeeftijd:67.25,pensioenWerkgever:16058,pensioenWerkgeverLeeftijd:68,partnerLeeftijd:51,partnerAowBrutoJaar:14379,partnerAowLeeftijd:67.25,partnerPensioenWerkgever:0,partnerPensioenWerkgeverLeeftijd:68,partnerPensioenExtra:0,partnerPensioenExtraLeeftijd:68,box3Drempel:114000,box3Fictief:6.04,box3Tarief:36,inflatie:3,onttrekkingsPct:3.5,extraDCA:0,eenmaligBTC:0,loonsverhogingPct:0};
+var KIN=[
+  {l:"Kind 1 (eigen, 13j)",   a:13, c:0.5, e:true},
+  {l:"Kind 2 (eigen, 10j)",   a:10, c:0.5, e:true},
+  {l:"Kind 3 (partner, 13j)", a:13, c:0.5, e:false},
+  {l:"Kind 4 (partner, 11j)", a:11, c:0.5, e:false},
+  {l:"Kind 5 (partner, 9j)",  a:9,  c:0.5, e:false},
+  {l:"Kind 6 (samen, 5j)",    a:5,  c:1.0, e:true}
+];
+try{var saved=localStorage.getItem("btc_planner_v2");if(saved){var parsed=JSON.parse(saved);for(var k in parsed){if(k in S)S[k]=parsed[k];}}}catch(e){}
+function save(){try{localStorage.setItem("btc_planner_v2",JSON.stringify(S));}catch(e){}}
+if(!localStorage.getItem("btc_planner_v2")){save();}
 
 var YR=2026;
 var GEN=new Date(2009,0,3).getTime();
@@ -108,14 +117,16 @@ function calc(){
 
     var kk=0;
     var kb=0;
-    var nk=S.aantalKinderen;
-    if(nk>0){
-      var avgka=10+yf;
-      if(avgka<S.kindUitHuisLeeftijd&&avgka<18){kk=S.kostenPerKindMaand*12*nk*inf;}
-      else if(avgka>=18&&avgka<S.kindUitHuisLeeftijd){kk=S.kostenPerKindMaand*0.5*12*nk*inf;}
-      if(avgka<18){
-        var kbv=avgka<=5?KBQ[0]:(avgka<=11?KBQ[1]:KBQ[2]);
-        kb=kbv*4*nk;
+    for(var ki=0;ki<KIN.length;ki++){
+      var kid=KIN[ki];
+      var ka=kid.a+yf;
+      if(ka<S.kindUitHuisLeeftijd){
+        var cf=ka>=18?0.5:1.0;
+        kk+=S.kostenPerKindMaand*12*kid.c*cf*inf;
+      }
+      if(kid.e&&ka>=0&&ka<18){
+        var kbv=ka<=5?KBQ[0]:(ka<=11?KBQ[1]:KBQ[2]);
+        kb+=kbv*4*kid.c;
       }
     }
 
@@ -231,7 +242,9 @@ function render(){
     o=o+'</select>';if(S.prijsModel==="custom")o=o+ip("Groei/jr","customGroei","%");o=o+'</div>';
     o=o+'<div class="cd"><div class="tt">Inkomen netto/mnd</div>'+ip("Jij","inkomenZelf","EUR")+ip("Partner","inkomenPartner","EUR")+ip("Loonsverhoging/jr","loonsverhogingPct","%")+'</div>';
     o=o+'<div class="cd"><div class="tt">Hypotheek</div>'+ip("Per maand","hypotheekMaand","EUR")+ip("Aflossingsvrij","hypotheekAflossingsvrij","EUR")+ip("Jaren rest","hypotheekJarenRest")+ip("Schuld","hypotheekSchuld","EUR")+'</div>';
-    o=o+'<div class="cd"><div class="tt">Kinderen</div>'+ip("Aantal kinderen","aantalKinderen")+ip("Uit huis leeftijd","kindUitHuisLeeftijd")+ip("Kosten/kind/mnd","kostenPerKindMaand","EUR")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Kinderen ('+KIN.length+')</div><table style="margin-bottom:10px"><tr><th>Kind</th><th>Nu</th><th>Zorg</th><th>KB</th></tr>';
+    for(var ki2=0;ki2<KIN.length;ki2++){var kd=KIN[ki2];o=o+'<tr><td>'+kd.l+'</td><td>'+kd.a+'j</td><td>'+(kd.c*100)+'%</td><td>'+(kd.e?'✓':'–')+'</td></tr>';}
+    o=o+'</table>'+ip("Uit huis leeftijd","kindUitHuisLeeftijd")+ip("Kosten/kind/mnd","kostenPerKindMaand","EUR")+'</div>';
     o=o+'<div class="cd"><div class="tt">Jouw pensioen</div>'+ip("AOW bruto/jr","aowBrutoJaar","EUR")+ip("AOW leeftijd","aowLeeftijd","",0.25)+ip("Werkgever bruto/jr","pensioenWerkgever","EUR")+ip("Werkgever vanaf lft","pensioenWerkgeverLeeftijd")+'</div>';
     o=o+'<div class="cd"><div class="tt">Partner pensioen</div>'+ip("Leeftijd partner","partnerLeeftijd")+ip("AOW partner/jr","partnerAowBrutoJaar","EUR")+ip("AOW lft partner","partnerAowLeeftijd","",0.25)+ip("Werkgever/jr","partnerPensioenWerkgever","EUR")+ip("Werkgever lft","partnerPensioenWerkgeverLeeftijd")+ip("Extra pensioen/jr","partnerPensioenExtra","EUR")+ip("Extra lft","partnerPensioenExtraLeeftijd")+'</div>';
     o=o+'<div class="cd"><div class="tt">Box 3</div>'+ip("Vrijstelling","box3Drempel","EUR")+'<div class="nb">Alleenstaand: 57.000 | Samen: 114.000</div>'+ip("Fictief rendement","box3Fictief","%",0.01)+ip("Tarief","box3Tarief","%")+'</div>';
@@ -285,7 +298,7 @@ function render(){
 }
 
 document.addEventListener("click",function(e){
-  if(e.target&&e.target.id==="clrBtn"){if(confirm("Alle opgeslagen gegevens wissen?")){localStorage.removeItem("btc_planner");location.reload();}return;}
+  if(e.target&&e.target.id==="clrBtn"){if(confirm("Alle opgeslagen gegevens wissen?")){localStorage.removeItem("btc_planner_v2");location.reload();}return;}
   if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;save();render();}}
 });
 var fmtFns={fE:fE,fB:fB,fP:fP};
