@@ -167,7 +167,7 @@ function mksvg(data,series,h,useLog,refs){
   function x(a){return PL+(a-mna)/(mxa-mna)*cw;}
   function y(val){var vv=useLog?Math.log10(Math.max(val,1)):val;return PT+ch-(vv-mn)/(mx-mn)*ch;}
 
-  var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">';
+  var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;height:auto;display:block">';
   for(i=0;i<=5;i++){var gy=PT+ch*i/5;var rv=useLog?Math.pow(10,mx-(mx-mn)*i/5):mx-(mx-mn)*i/5;
     s=s+'<line x1="'+PL+'" y1="'+gy+'" x2="'+(W-PR)+'" y2="'+gy+'" stroke="#30363d" stroke-width="0.5"/>';
     s=s+'<text x="'+(PL-4)+'" y="'+(gy+3)+'" fill="#8b949e" font-size="7" text-anchor="end" font-family="monospace">'+fE(rv)+'</text>';}
@@ -217,8 +217,8 @@ function render(){
     o=o+'<div class="cd"><div class="tt">Piek waarde</div><div class="bg">'+fE(peak)+'</div><div class="dm">binnen model</div></div>';
     o=o+'</div>';
     var refs=[];if(fi!==null)refs.push({x:fi,c:"#3fb950",l:"FI"});refs.push({x:Math.ceil(S.aowLeeftijd),c:"#58a6ff",l:"AOW"});
-    o=o+'<div class="cd"><div class="tt">Vermogensopbouw</div>'+mksvg(rows,[{k:"bw",l:"BTC Waarde",c:"#f7931a",a:true,w:2},{k:"uitg",l:"Uitgaven",c:"#f85149",w:1.5},{k:"pen",l:"Pensioen",c:"#3fb950",w:1.5}],280,false,refs)+'</div>';
-    o=o+'<div class="cd"><div class="tt">BTC bezit</div>'+mksvg(rows,[{k:"btc",l:"BTC",c:"#f7931a",a:true,w:2}],180,false,fi!==null?[{x:fi,c:"#3fb950",l:"FI"}]:[])+'</div>';
+    o=o+'<div class="cd"><div class="tt">Vermogensopbouw</div>'+mksvg(rows,[{k:"bw",l:"BTC Waarde",c:"#f7931a",a:true,w:2},{k:"uitg",l:"Uitgaven",c:"#f85149",w:1.5},{k:"pen",l:"Pensioen",c:"#3fb950",w:1.5}],200,false,refs)+'</div>';
+    o=o+'<div class="cd"><div class="tt">BTC bezit</div>'+mksvg(rows,[{k:"btc",l:"BTC",c:"#f7931a",a:true,w:2}],150,false,fi!==null?[{x:fi,c:"#3fb950",l:"FI"}]:[])+'</div>';
   }
 
   if(S.tab==="invoer"){
@@ -245,7 +245,7 @@ function render(){
     var mD=[];
     for(var age2=S.leeftijd;age2<=S.levensverwachting;age2++){var yr2=YR+(age2-S.leeftijd);var entry={age:age2};for(i=0;i<ms.length;i++)entry[ms[i]]=btcp(ms[i],yr2);mD.push(entry);}
     var mSeries=[];for(i=0;i<ms.length;i++)mSeries.push({k:ms[i],l:ML[ms[i]].split(" ")[0],c:MC[ms[i]],w:2});
-    o=o+'<div class="cd"><div class="tt">BTC prijs per model (log)</div>'+mksvg(mD,mSeries,340,true,null)+'</div>';
+    o=o+'<div class="cd"><div class="tt">BTC prijs per model (log)</div>'+mksvg(mD,mSeries,220,true,null)+'</div>';
     o=o+'<div class="cd" style="overflow-x:auto"><div class="tt">Prijzen bij leeftijden</div><table><tr><th>Lft</th><th>Jaar</th>';
     for(i=0;i<ms.length;i++)o=o+'<th style="color:'+MC[ms[i]]+'">'+ML[ms[i]].split(" ")[0]+'</th>';
     o=o+'</tr>';
@@ -276,7 +276,7 @@ function render(){
     for(i=0;i<MN.length;i++)o=o+'<option value="'+MN[i]+'"'+(S.prijsModel===MN[i]?' selected':'')+'>'+ML[MN[i]]+'</option>';
     o=o+'</select></div></div>';
     var refs2=[];if(fi!==null)refs2.push({x:fi,c:"#3fb950",l:"FI"});refs2.push({x:Math.ceil(S.aowLeeftijd),c:"#58a6ff",l:"AOW"});
-    o=o+'<div class="cd"><div class="tt">Impact</div>'+mksvg(rows,[{k:"bw",l:"BTC Waarde",c:"#f7931a",a:true,w:2},{k:"uitg",l:"Uitgaven",c:"#f85149",w:1.5},{k:"b3",l:"Box 3",c:"#bc8cff",w:1}],250,false,refs2)+'</div>';
+    o=o+'<div class="cd"><div class="tt">Impact</div>'+mksvg(rows,[{k:"bw",l:"BTC Waarde",c:"#f7931a",a:true,w:2},{k:"uitg",l:"Uitgaven",c:"#f85149",w:1.5},{k:"b3",l:"Box 3",c:"#bc8cff",w:1}],200,false,refs2)+'</div>';
   }
 
   o=o+'</div>';
