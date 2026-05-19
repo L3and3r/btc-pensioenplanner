@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin Pensioenplanner</title>
+<meta name="description" content="Bereken hoeveel Bitcoin je nodig hebt voor financiele onafhankelijkheid">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:monospace;font-size:13px}
+.hd{background:linear-gradient(135deg,#0d1117,#1a1208);padding:20px;border-bottom:1px solid #30363d}
+.hd h1{font-size:20px;color:#f7931a}
+.hd p{font-size:11px;color:#8b949e;margin-top:4px}
+.tabs{display:flex;overflow-x:auto;background:#161b22;border-bottom:1px solid #30363d;padding:0 8px}
+.tb{padding:10px 12px;font-size:11px;color:#8b949e;background:none;border:none;border-bottom:2px solid transparent;font-family:inherit;white-space:nowrap}
+.tb.on{color:#f7931a;font-weight:700;border-bottom-color:#f7931a}
+.ct{padding:14px;padding-bottom:80px}
+.gr{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.cd{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:10px}
+.tt{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.bg{font-size:26px;font-weight:700;color:#f7931a}
+.dm{color:#8b949e;font-size:11px}
+.lb{display:block;font-size:11px;color:#8b949e;margin:8px 0 3px}
+.ip{width:100%;padding:7px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:13px;font-family:inherit}
+.sl{width:100%;accent-color:#f7931a}
+.fb{border-radius:8px;padding:16px;text-align:center;margin-bottom:14px}
+.fy{background:#132d1a;border:1px solid #3fb950}
+.fn{background:#2d1318;border:1px solid #f85149}
+table{width:100%;border-collapse:collapse;font-size:10px}
+th{text-align:left;padding:5px;border-bottom:1px solid #30363d;color:#8b949e;font-size:9px;text-transform:uppercase}
+td{padding:4px 5px;border-bottom:1px solid #30363d22}
+.hi{color:#f7931a}
+.nb{margin-top:6px;padding:6px;background:#0d1117;border-radius:4px;font-size:10px;color:#8b949e}
+.err{background:#f85149;color:#fff;padding:20px;font-size:14px;word-break:break-all}
+.welcome{max-width:600px;margin:0 auto;padding:30px 0}
+.welcome h2{color:#f7931a;font-size:16px;margin-bottom:12px}
+.welcome p{color:#8b949e;font-size:12px;line-height:1.6;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+try{
+
+var S={tab:"dashboard",leeftijd:40,levensverwachting:90,huidigeBTC:0,maandelijksDCA:100,btcPrijsEUR:66000,eurUsd:1.164,prijsModel:"moderate",customGroei:20,inkomenZelf:0,inkomenPartner:0,hypotheekMaand:0,hypotheekAflossingsvrij:0,hypotheekJarenRest:0,hypotheekSchuld:0,kindUitHuisLeeftijd:24,kostenPerKindMaand:350,aantalKinderen:0,aowBrutoJaar:14379,aowLeeftijd:67.25,pensioenWerkgever:0,pensioenWerkgeverLeeftijd:68,partnerLeeftijd:40,partnerAowBrutoJaar:0,partnerAowLeeftijd:67.25,partnerPensioenWerkgever:0,partnerPensioenWerkgeverLeeftijd:68,partnerPensioenExtra:0,partnerPensioenExtraLeeftijd:68,box3Drempel:57000,box3Fictief:6.04,box3Tarief:36,inflatie:3,onttrekkingsPct:3.5,extraDCA:0,eenmaligBTC:0,loonsverhogingPct:0};
+
+var YR=2026;
+var GEN=new Date(2009,0,3).getTime();
+var KBQ=[279.49,339.39,399.29];
+var MN=["conservative","moderate","optimistic","powerlaw","s2f","custom"];
+var ML={"conservative":"Conservatief (10%/jr)","moderate":"Gemiddeld (20%/jr)","optimistic":"Optimistisch (30%/jr)","powerlaw":"Power Law","s2f":"Stock-to-Flow","custom":"Aangepast"};
+var MC={"conservative":"#6b7280","moderate":"#f59e0b","optimistic":"#10b981","powerlaw":"#f97316","s2f":"#8b5cf6","custom":"#06b6d4"};
+
+function plaw(y){
+  var d=(new Date(y,6,1).getTime()-GEN)/86400000;
+  return Math.pow(10,-17.01+5.82*Math.log10(d));
+}
+function stof(y){
+  var h=[2012,2016,2020,2024,2028,2032,2036,2040,2044,2048];
+  var s=1.8;
+  for(var i=0;i<h.length;i++){if(y>=h[i])s=s*2;}
+  return 0.18*Math.pow(s,3.3);
+}
+function btcp(m,y){
+  var d=y-YR;
+  var b=S.btcPrijsEUR;
+  if(m==="conservative")return b*Math.pow(1.1,d);
+  if(m==="moderate")return b*Math.pow(1.2,d);
+  if(m==="optimistic")return b*Math.pow(1.3,d);
+  if(m==="powerlaw")return plaw(y)/S.eurUsd;
+  if(m==="s2f")return stof(y)/S.eurUsd;
+  if(m==="custom")return b*Math.pow(1+S.customGroei/100,d);
+  return b;
+}
+
+function fE(v){
+  if(v===null||v===undefined||isNaN(v))return"\u20AC0";
+  var a=Math.abs(v);
+  if(a>=1000000)return"\u20AC"+(v/1000000).toFixed(1)+"M";
+  if(a>=1000)return"\u20AC"+(v/1000).toFixed(0)+"K";
+  return"\u20AC"+Math.round(v);
+}
+function fB(v){return v===null||v===undefined?"0":v.toFixed(4);}
+function fP(v){return v.toFixed(1)+"%";}
+
+function calc(){
+  var dca=S.maandelijksDCA+S.extraDCA;
+  var btc=S.huidigeBTC+S.eenmaligBTC;
+  var fi=null;
+  var bruto=(S.inkomenZelf+S.inkomenPartner)*12;
+  var rows=[];
+
+  for(var age=S.leeftijd;age<=S.levensverwachting;age++){
+    var yr=YR+(age-S.leeftijd);
+    var yf=age-S.leeftijd;
+    var inf=Math.pow(1+S.inflatie/100,yf);
+    var bp=btcp(S.prijsModel,yr);
+
+    var pen=0;
+    if(age>=Math.ceil(S.aowLeeftijd))pen=pen+S.aowBrutoJaar;
+    if(age>=S.pensioenWerkgeverLeeftijd)pen=pen+S.pensioenWerkgever;
+    var pa=S.partnerLeeftijd+yf;
+    if(pa>=Math.ceil(S.partnerAowLeeftijd))pen=pen+S.partnerAowBrutoJaar;
+    if(pa>=S.partnerPensioenWerkgeverLeeftijd)pen=pen+S.partnerPensioenWerkgever;
+    if(pa>=S.partnerPensioenExtraLeeftijd)pen=pen+S.partnerPensioenExtra;
+
+    var kk=0;
+    var kb=0;
+    var nk=S.aantalKinderen;
+    if(nk>0){
+      var avgka=10+yf;
+      if(avgka<S.kindUitHuisLeeftijd&&avgka<18){kk=S.kostenPerKindMaand*12*nk*inf;}
+      else if(avgka>=18&&avgka<S.kindUitHuisLeeftijd){kk=S.kostenPerKindMaand*0.5*12*nk*inf;}
+      if(avgka<18){
+        var kbv=avgka<=5?KBQ[0]:(avgka<=11?KBQ[1]:KBQ[2]);
+        kb=kbv*4*nk;
+      }
+    }
+
+    var hyp=yf<S.hypotheekJarenRest?S.hypotheekMaand*12:0;
+    var bl=bruto-(S.maandelijksDCA+1000)*12-S.hypotheekMaand*12-kk;
+    if(bl<0)bl=0;
+    var uitg=bl*inf+kk+hyp;
+    var bw=btc*bp;
+    var drempel=S.partnerAowBrutoJaar>0?S.box3Drempel*2:S.box3Drempel;
+    var b3=Math.max(0,bw-drempel)*(S.box3Fictief/100)*(S.box3Tarief/100);
+
+    if(fi===null||age<fi){btc=btc+(dca*12)/bp;}
+    if(fi!==null&&age>=fi){
+      var need=uitg-pen-kb+b3;
+      if(need<0)need=0;
+      btc=btc-need/bp;
+      if(btc<0)btc=0;
+    }
+    if(fi===null){
+      var sw=btc*bp*(S.onttrekkingsPct/100);
+      var fg=uitg-pen-kb;
+      if(fg<0)fg=0;
+      var rem=S.levensverwachting-age;
+      if(rem>10)rem=10;
+      if(sw>=fg&&btc*bp>fg*rem){fi=age;}
+    }
+
+    rows.push({age:age,yr:yr,bp:bp,btc:btc,bw:btc*bp,uitg:uitg,pen:pen,kb:kb,b3:b3,fi:fi!==null&&age>=fi});
+  }
+  return{rows:rows,fi:fi};
+}
+
+function mksvg(data,series,h,useLog,refs){
+  var W=320;
+  var H=h||280;
+  var PL=58;var PT=16;var PR=12;var PB=24;
+  var cw=W-PL-PR;var ch=H-PT-PB;
+  var allV=[];var i,j,se,v;
+
+  for(i=0;i<series.length;i++){se=series[i];for(j=0;j<data.length;j++){v=data[j][se.k];if(v!==null&&v!==undefined&&isFinite(v)&&v>0)allV.push(useLog?Math.log10(v):v);}}
+  if(allV.length===0)return'<p class="dm">Vul je gegevens in bij Invoer</p>';
+
+  var mn=allV[0];var mx=allV[0];
+  for(i=1;i<allV.length;i++){if(allV[i]<mn)mn=allV[i];if(allV[i]>mx)mx=allV[i];}
+  if(mn===mx){mn=mn*0.9;mx=mx*1.1;}
+  var mna=data[0].age;var mxa=data[data.length-1].age;
+  if(mna===mxa)mxa=mna+1;
+
+  function x(a){return PL+(a-mna)/(mxa-mna)*cw;}
+  function y(val){var vv=useLog?Math.log10(Math.max(val,1)):val;return PT+ch-(vv-mn)/(mx-mn)*ch;}
+
+  var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">';
+  for(i=0;i<=5;i++){var gy=PT+ch*i/5;var rv=useLog?Math.pow(10,mx-(mx-mn)*i/5):mx-(mx-mn)*i/5;
+    s=s+'<line x1="'+PL+'" y1="'+gy+'" x2="'+(W-PR)+'" y2="'+gy+'" stroke="#30363d" stroke-width="0.5"/>';
+    s=s+'<text x="'+(PL-4)+'" y="'+(gy+3)+'" fill="#8b949e" font-size="7" text-anchor="end" font-family="monospace">'+fE(rv)+'</text>';}
+  var step=Math.max(1,Math.ceil((mxa-mna)/7));
+  for(i=mna;i<=mxa;i=i+step)s=s+'<text x="'+x(i)+'" y="'+(H-6)+'" fill="#8b949e" font-size="7" text-anchor="middle" font-family="monospace">'+i+'</text>';
+
+  for(i=0;i<series.length;i++){se=series[i];var pts=[];
+    for(j=0;j<data.length;j++){v=data[j][se.k];if(v!==null&&v!==undefined&&isFinite(v)&&v>0)pts.push({x:x(data[j].age),y:y(v)});}
+    if(pts.length===0)continue;
+    if(se.a){var ap="M"+pts[0].x.toFixed(1)+","+(PT+ch);for(j=0;j<pts.length;j++)ap=ap+"L"+pts[j].x.toFixed(1)+","+pts[j].y.toFixed(1);ap=ap+"L"+pts[pts.length-1].x.toFixed(1)+","+(PT+ch)+"Z";s=s+'<path d="'+ap+'" fill="'+se.c+'" opacity="0.15"/>';}
+    var lp="M"+pts[0].x.toFixed(1)+","+pts[0].y.toFixed(1);for(j=1;j<pts.length;j++)lp=lp+"L"+pts[j].x.toFixed(1)+","+pts[j].y.toFixed(1);
+    s=s+'<path d="'+lp+'" fill="none" stroke="'+se.c+'" stroke-width="'+(se.w||2)+'"/>';}
+
+  if(refs)for(i=0;i<refs.length;i++){var r=refs[i];if(r.x>=mna&&r.x<=mxa){var rx=x(r.x);
+    s=s+'<line x1="'+rx+'" y1="'+PT+'" x2="'+rx+'" y2="'+(PT+ch)+'" stroke="'+r.c+'" stroke-dasharray="4,4"/>';
+    s=s+'<text x="'+(rx+3)+'" y="'+(PT+10)+'" fill="'+r.c+'" font-size="7" font-family="monospace">'+r.l+'</text>';}}
+
+  var lx=PL;for(i=0;i<series.length;i++){se=series[i];
+    s=s+'<rect x="'+lx+'" y="'+(H-16)+'" width="8" height="3" fill="'+se.c+'" rx="1"/>';
+    s=s+'<text x="'+(lx+11)+'" y="'+(H-12)+'" fill="#8b949e" font-size="6" font-family="monospace">'+se.l+'</text>';lx=lx+se.l.length*4+18;}
+  s=s+'</svg>';return s;
+}
+
+function render(){
+  try{
+  var res=calc();var rows=res.rows;var fi=res.fi;var fiRow=null;var peak=0;var i;
+  for(i=0;i<rows.length;i++){if(rows[i].bw>peak)peak=rows[i].bw;if(fi!==null&&rows[i].age===fi)fiRow=rows[i];}
+
+  var o='<div class="hd"><h1>&#8383; Bitcoin Pensioenplanner</h1>';
+  o=o+'<p>'+ML[S.prijsModel]+' | BTC: '+fE(S.btcPrijsEUR)+' | Inflatie: '+S.inflatie+'%</p></div>';
+
+  var tabs=[["dashboard","Dashboard"],["invoer","Invoer"],["modellen","Modellen"],["tijdlijn","Tijdlijn"],["whatif","What-If"]];
+  o=o+'<div class="tabs">';
+  for(i=0;i<tabs.length;i++)o=o+'<button class="tb'+(S.tab===tabs[i][0]?" on":"")+'" data-tab="'+tabs[i][0]+'">'+tabs[i][1]+'</button>';
+  o=o+'</div><div class="ct">';
+
+  if(S.tab==="dashboard"){
+    if(fi!==null&&fiRow){
+      o=o+'<div class="fb fy"><div style="font-size:13px;color:#3fb950">Financieel onafhankelijk op leeftijd</div><div style="font-size:40px;font-weight:800;color:#3fb950">'+fi+'</div><div class="dm">Over '+(fi-S.leeftijd)+' jaar | in '+(YR+fi-S.leeftijd)+' | '+fB(fiRow.btc)+' BTC ('+fE(fiRow.bw)+')</div></div>';
+    }else{
+      o=o+'<div class="fb fn"><div style="font-size:13px;color:#f85149">FI niet bereikt binnen model</div><div class="dm">Vul je gegevens in bij Invoer en probeer scenario\'s bij What-If</div></div>';
+    }
+    o=o+'<div class="gr">';
+    o=o+'<div class="cd"><div class="tt">Huidige BTC</div><div class="bg">'+fB(S.huidigeBTC)+'</div><div class="dm">'+fE(S.huidigeBTC*S.btcPrijsEUR)+'</div></div>';
+    o=o+'<div class="cd"><div class="tt">DCA / maand</div><div class="bg">'+fE(S.maandelijksDCA+S.extraDCA)+'</div><div class="dm">'+fB((S.maandelijksDCA+S.extraDCA)/S.btcPrijsEUR)+' BTC/mnd</div></div>';
+    o=o+'<div class="cd"><div class="tt">Pensioen samen</div><div class="bg">'+fE(S.aowBrutoJaar+S.pensioenWerkgever+S.partnerAowBrutoJaar+S.partnerPensioenWerkgever+S.partnerPensioenExtra)+'</div><div class="dm">bruto per jaar</div></div>';
+    o=o+'<div class="cd"><div class="tt">Piek waarde</div><div class="bg">'+fE(peak)+'</div><div class="dm">binnen model</div></div>';
+    o=o+'</div>';
+    var refs=[];if(fi!==null)refs.push({x:fi,c:"#3fb950",l:"FI"});refs.push({x:Math.ceil(S.aowLeeftijd),c:"#58a6ff",l:"AOW"});
+    o=o+'<div class="cd"><div class="tt">Vermogensopbouw</div>'+mksvg(rows,[{k:"bw",l:"BTC Waarde",c:"#f7931a",a:true,w:2},{k:"uitg",l:"Uitgaven",c:"#f85149",w:1.5},{k:"pen",l:"Pensioen",c:"#3fb950",w:1.5}],280,false,refs)+'</div>';
+    o=o+'<div class="cd"><div class="tt">BTC bezit</div>'+mksvg(rows,[{k:"btc",l:"BTC",c:"#f7931a",a:true,w:2}],180,false,fi!==null?[{x:fi,c:"#3fb950",l:"FI"}]:[])+'</div>';
+  }
+
+  if(S.tab==="invoer"){
+    function ip(lb,ky,su,st){return'<label class="lb">'+lb+(su?' ('+su+')':'')+'</label><input class="ip" type="number" step="'+(st||"any")+'" value="'+S[ky]+'" data-key="'+ky+'">';}
+    o=o+'<div class="gr">';
+    o=o+'<div class="cd"><div class="tt">Persoonlijk</div>'+ip("Leeftijd","leeftijd")+ip("Levensverwachting","levensverwachting")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Bitcoin</div>'+ip("Huidig BTC bezit","huidigeBTC","",0.001)+ip("DCA per maand","maandelijksDCA","EUR")+ip("BTC prijs","btcPrijsEUR","EUR")+ip("EUR/USD","eurUsd","",0.001);
+    o=o+'<label class="lb">Prijsmodel</label><select class="ip" data-key="prijsModel">';
+    for(i=0;i<MN.length;i++)o=o+'<option value="'+MN[i]+'"'+(S.prijsModel===MN[i]?' selected':'')+'>'+ML[MN[i]]+'</option>';
+    o=o+'</select>';if(S.prijsModel==="custom")o=o+ip("Groei/jr","customGroei","%");o=o+'</div>';
+    o=o+'<div class="cd"><div class="tt">Inkomen netto/mnd</div>'+ip("Jij","inkomenZelf","EUR")+ip("Partner","inkomenPartner","EUR")+ip("Loonsverhoging/jr","loonsverhogingPct","%")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Hypotheek</div>'+ip("Per maand","hypotheekMaand","EUR")+ip("Aflossingsvrij","hypotheekAflossingsvrij","EUR")+ip("Jaren rest","hypotheekJarenRest")+ip("Schuld","hypotheekSchuld","EUR")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Kinderen</div>'+ip("Aantal kinderen","aantalKinderen")+ip("Uit huis leeftijd","kindUitHuisLeeftijd")+ip("Kosten/kind/mnd","kostenPerKindMaand","EUR")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Jouw pensioen</div>'+ip("AOW bruto/jr","aowBrutoJaar","EUR")+ip("AOW leeftijd","aowLeeftijd","",0.25)+ip("Werkgever bruto/jr","pensioenWerkgever","EUR")+ip("Werkgever vanaf lft","pensioenWerkgeverLeeftijd")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Partner pensioen</div>'+ip("Leeftijd partner","partnerLeeftijd")+ip("AOW partner/jr","partnerAowBrutoJaar","EUR")+ip("AOW lft partner","partnerAowLeeftijd","",0.25)+ip("Werkgever/jr","partnerPensioenWerkgever","EUR")+ip("Werkgever lft","partnerPensioenWerkgeverLeeftijd")+ip("Extra pensioen/jr","partnerPensioenExtra","EUR")+ip("Extra lft","partnerPensioenExtraLeeftijd")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Box 3</div>'+ip("Vrijstelling","box3Drempel","EUR")+'<div class="nb">Alleenstaand: 57.000 | Samen: 114.000</div>'+ip("Fictief rendement","box3Fictief","%",0.01)+ip("Tarief","box3Tarief","%")+'</div>';
+    o=o+'<div class="cd"><div class="tt">Overig</div>'+ip("Inflatie","inflatie","%",0.1)+ip("Onttrekking-%","onttrekkingsPct","%",0.1)+'<div class="nb">3-4% geldt als veilige onttrekkingsratio</div></div>';
+    o=o+'</div>';
+  }
+
+  if(S.tab==="modellen"){
+    var ms=["conservative","moderate","optimistic","powerlaw","s2f"];
+    var mD=[];
+    for(var age2=S.leeftijd;age2<=S.levensverwachting;age2++){var yr2=YR+(age2-S.leeftijd);var entry={age:age2};for(i=0;i<ms.length;i++)entry[ms[i]]=btcp(ms[i],yr2);mD.push(entry);}
+    var mSeries=[];for(i=0;i<ms.length;i++)mSeries.push({k:ms[i],l:ML[ms[i]].split(" ")[0],c:MC[ms[i]],w:2});
+    o=o+'<div class="cd"><div class="tt">BTC prijs per model (log)</div>'+mksvg(mD,mSeries,340,true,null)+'</div>';
+    o=o+'<div class="cd" style="overflow-x:auto"><div class="tt">Prijzen bij leeftijden</div><table><tr><th>Lft</th><th>Jaar</th>';
+    for(i=0;i<ms.length;i++)o=o+'<th style="color:'+MC[ms[i]]+'">'+ML[ms[i]].split(" ")[0]+'</th>';
+    o=o+'</tr>';
+    var la=[45,50,55,60,65,68,70,75,80,85,90];
+    for(i=0;i<la.length;i++){var ag=la[i];if(ag<S.leeftijd||ag>S.levensverwachting)continue;var yr3=YR+(ag-S.leeftijd);
+      o=o+'<tr><td class="hi">'+ag+'</td><td>'+yr3+'</td>';for(j=0;j<ms.length;j++)o=o+'<td>'+fE(btcp(ms[j],yr3))+'</td>';o=o+'</tr>';}
+    o=o+'</table></div>';
+  }
+
+  if(S.tab==="tijdlijn"){
+    o=o+'<div class="cd" style="overflow-x:auto"><div class="tt">Projectie per jaar</div><table><tr><th>Lft</th><th>Jaar</th><th>Prijs</th><th>BTC</th><th>Waarde</th><th>Uitg</th><th>Pens</th><th>B3</th></tr>';
+    for(i=0;i<rows.length;i++){var r=rows[i];var bg2=r.age===fi?"background:#132d1a66":(r.fi?"background:#132d1a33":"");
+      o=o+'<tr style="'+bg2+'"><td'+(r.age===fi?' class="hi"':'')+'>'+r.age+'</td><td>'+r.yr+'</td><td>'+fE(r.bp)+'</td><td>'+fB(r.btc)+'</td><td class="hi">'+fE(r.bw)+'</td><td>'+fE(r.uitg)+'</td><td>'+fE(r.pen)+'</td><td>'+fE(r.b3)+'</td></tr>';}
+    o=o+'</table></div>';
+  }
+
+  if(S.tab==="whatif"){
+    if(fi!==null&&fiRow)o=o+'<div class="fb fy"><div style="color:#3fb950">FI leeftijd <span style="font-size:30px;font-weight:800">'+fi+'</span></div><div class="dm">'+fB(fiRow.btc)+' BTC ('+fE(fiRow.bw)+')</div></div>';
+    else o=o+'<div class="fb fn"><div style="color:#f85149">FI niet bereikt</div></div>';
+    function sld(lb,ky,mn2,mx2,st2,fmt){return'<div style="margin-bottom:8px"><label class="lb">'+lb+': <span style="color:#f7931a">'+fmt(S[ky])+'</span></label><input type="range" class="sl" min="'+mn2+'" max="'+mx2+'" step="'+st2+'" value="'+S[ky]+'" data-key="'+ky+'"></div>';}
+    o=o+'<div class="gr">';
+    o=o+'<div class="cd"><div class="tt">Extra DCA</div>'+sld("Per maand","extraDCA",0,1000,25,fE)+'<div class="dm">Totaal: '+fE(S.maandelijksDCA+S.extraDCA)+'/mnd</div></div>';
+    o=o+'<div class="cd"><div class="tt">Eenmalige koop</div>'+sld("BTC","eenmaligBTC",0,2,0.01,fB)+'<div class="dm">'+fE(S.eenmaligBTC*S.btcPrijsEUR)+'</div></div>';
+    o=o+'<div class="cd"><div class="tt">Loon</div>'+sld("Verhoging/jr","loonsverhogingPct",0,10,0.5,fP)+'</div>';
+    o=o+'<div class="cd"><div class="tt">Inflatie</div>'+sld("Per jaar","inflatie",0,10,0.5,fP)+'</div>';
+    o=o+'<div class="cd"><div class="tt">Onttrekking</div>'+sld("Per jaar","onttrekkingsPct",1,8,0.1,fP)+'<div class="dm">3-4% = safe rate</div></div>';
+    o=o+'<div class="cd"><div class="tt">Model</div><select class="ip" data-key="prijsModel">';
+    for(i=0;i<MN.length;i++)o=o+'<option value="'+MN[i]+'"'+(S.prijsModel===MN[i]?' selected':'')+'>'+ML[MN[i]]+'</option>';
+    o=o+'</select></div></div>';
+    var refs2=[];if(fi!==null)refs2.push({x:fi,c:"#3fb950",l:"FI"});refs2.push({x:Math.ceil(S.aowLeeftijd),c:"#58a6ff",l:"AOW"});
+    o=o+'<div class="cd"><div class="tt">Impact</div>'+mksvg(rows,[{k:"bw",l:"BTC Waarde",c:"#f7931a",a:true,w:2},{k:"uitg",l:"Uitgaven",c:"#f85149",w:1.5},{k:"b3",l:"Box 3",c:"#bc8cff",w:1}],250,false,refs2)+'</div>';
+  }
+
+  o=o+'</div>';
+  document.getElementById("app").innerHTML=o;
+  }catch(err){document.getElementById("app").innerHTML='<div class="err">'+err.message+'</div>';}
+}
+
+document.addEventListener("click",function(e){
+  if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;render();}}
+});
+document.addEventListener("input",function(e){
+  if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
+  if(e.target.type==="number"||e.target.type==="range"){S[key]=parseFloat(e.target.value)||0;}else{S[key]=e.target.value;}render();
+});
+document.addEventListener("change",function(e){
+  if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
+  if(e.target.tagName==="SELECT"){S[key]=e.target.value;}else{S[key]=parseFloat(e.target.value)||0;}render();
+});
+
+render();
+
+}catch(err){document.body.innerHTML='<div style="background:#f85149;color:#fff;padding:20px">'+err.message+'</div>';}
+</script>
+</body>
+</html>
