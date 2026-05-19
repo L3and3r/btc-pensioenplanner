@@ -201,7 +201,7 @@ function render(){
 
   var tabs=[["dashboard","Dashboard"],["invoer","Invoer"],["modellen","Modellen"],["tijdlijn","Tijdlijn"],["whatif","What-If"]];
   o=o+'<div class="tabs">';
-  for(i=0;i<tabs.length;i++)o=o+'<button class="tb'+(S.tab===tabs[i][0]?" on":"")+'" data-tab="'+tabs[i][0]+'">'+tabs[i][1]+'</button>';
+  for(i=0;i<tabs.length;i++)o=o+'<button class="tb'+(S.tab===tabs[i][0]?" on":"")+'" data-tab="'+tabs[i][0]+'" tabindex="-1">'+tabs[i][1]+'</button>';
   o=o+'</div><div class="ct">';
 
   if(S.tab==="dashboard"){
