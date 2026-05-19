@@ -290,7 +290,9 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){
   if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
-  if(e.target.type==="number"||e.target.type==="range"){S[key]=parseFloat(e.target.value)||0;}else{S[key]=e.target.value;}save();render();
+  if(e.target.type==="range"){S[key]=parseFloat(e.target.value)||0;save();render();}
+  else if(e.target.type==="number"){S[key]=parseFloat(e.target.value)||0;save();}
+  else{S[key]=e.target.value;save();}
 });
 document.addEventListener("change",function(e){
   if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
