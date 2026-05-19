@@ -43,6 +43,8 @@ td{padding:4px 5px;border-bottom:1px solid #30363d22}
 try{
 
 var S={tab:"dashboard",leeftijd:40,levensverwachting:90,huidigeBTC:0,maandelijksDCA:100,btcPrijsEUR:66000,eurUsd:1.164,prijsModel:"moderate",customGroei:20,inkomenZelf:0,inkomenPartner:0,hypotheekMaand:0,hypotheekAflossingsvrij:0,hypotheekJarenRest:0,hypotheekSchuld:0,kindUitHuisLeeftijd:24,kostenPerKindMaand:350,aantalKinderen:0,aowBrutoJaar:14379,aowLeeftijd:67.25,pensioenWerkgever:0,pensioenWerkgeverLeeftijd:68,partnerLeeftijd:40,partnerAowBrutoJaar:0,partnerAowLeeftijd:67.25,partnerPensioenWerkgever:0,partnerPensioenWerkgeverLeeftijd:68,partnerPensioenExtra:0,partnerPensioenExtraLeeftijd:68,box3Drempel:57000,box3Fictief:6.04,box3Tarief:36,inflatie:3,onttrekkingsPct:3.5,extraDCA:0,eenmaligBTC:0,loonsverhogingPct:0};
+try{var saved=localStorage.getItem("btc_planner");if(saved){var parsed=JSON.parse(saved);for(var k in parsed){if(k in S)S[k]=parsed[k];}}}catch(e){}
+function save(){try{localStorage.setItem("btc_planner",JSON.stringify(S));}catch(e){}}
 
 var YR=2026;
 var GEN=new Date(2009,0,3).getTime();
@@ -282,15 +284,15 @@ function render(){
 }
 
 document.addEventListener("click",function(e){
-  if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;render();}}
+  if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;save();render();}}
 });
 document.addEventListener("input",function(e){
   if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
-  if(e.target.type==="number"||e.target.type==="range"){S[key]=parseFloat(e.target.value)||0;}else{S[key]=e.target.value;}render();
+  if(e.target.type==="number"||e.target.type==="range"){S[key]=parseFloat(e.target.value)||0;}else{S[key]=e.target.value;}save();render();
 });
 document.addEventListener("change",function(e){
   if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
-  if(e.target.tagName==="SELECT"){S[key]=e.target.value;}else{S[key]=parseFloat(e.target.value)||0;}render();
+  if(e.target.tagName==="SELECT"){S[key]=e.target.value;}else{S[key]=parseFloat(e.target.value)||0;}save();render();
 });
 
 render();
