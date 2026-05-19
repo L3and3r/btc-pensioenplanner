@@ -265,7 +265,7 @@ function render(){
   if(S.tab==="whatif"){
     if(fi!==null&&fiRow)o=o+'<div class="fb fy"><div style="color:#3fb950">FI leeftijd <span style="font-size:30px;font-weight:800">'+fi+'</span></div><div class="dm">'+fB(fiRow.btc)+' BTC ('+fE(fiRow.bw)+')</div></div>';
     else o=o+'<div class="fb fn"><div style="color:#f85149">FI niet bereikt</div></div>';
-    function sld(lb,ky,mn2,mx2,st2,fmt){return'<div style="margin-bottom:8px"><label class="lb">'+lb+': <span style="color:#f7931a">'+fmt(S[ky])+'</span></label><input type="range" class="sl" min="'+mn2+'" max="'+mx2+'" step="'+st2+'" value="'+S[ky]+'" data-key="'+ky+'"></div>';}
+    function sld(lb,ky,mn2,mx2,st2,fmt){var fn=fmt===fE?"fE":fmt===fB?"fB":"fP";return'<div style="margin-bottom:8px"><label class="lb">'+lb+': <span style="color:#f7931a" id="sld_'+ky+'">'+fmt(S[ky])+'</span></label><input type="range" class="sl" min="'+mn2+'" max="'+mx2+'" step="'+st2+'" value="'+S[ky]+'" data-key="'+ky+'" data-fmt="'+fn+'"></div>';}
     o=o+'<div class="gr">';
     o=o+'<div class="cd"><div class="tt">Extra DCA</div>'+sld("Per maand","extraDCA",0,1000,25,fE)+'<div class="dm">Totaal: '+fE(S.maandelijksDCA+S.extraDCA)+'/mnd</div></div>';
     o=o+'<div class="cd"><div class="tt">Eenmalige koop</div>'+sld("BTC","eenmaligBTC",0,2,0.01,fB)+'<div class="dm">'+fE(S.eenmaligBTC*S.btcPrijsEUR)+'</div></div>';
@@ -288,10 +288,14 @@ document.addEventListener("click",function(e){
   if(e.target&&e.target.id==="clrBtn"){if(confirm("Alle opgeslagen gegevens wissen?")){localStorage.removeItem("btc_planner");location.reload();}return;}
   if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;save();render();}}
 });
+var fmtFns={fE:fE,fB:fB,fP:fP};
 document.addEventListener("input",function(e){
   if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
-  if(e.target.type==="range"){S[key]=parseFloat(e.target.value)||0;save();render();}
-  else if(e.target.type==="number"){S[key]=parseFloat(e.target.value)||0;save();}
+  if(e.target.type==="range"){
+    S[key]=parseFloat(e.target.value)||0;save();
+    var sp=document.getElementById("sld_"+key);
+    if(sp){var fn=fmtFns[e.target.getAttribute("data-fmt")]||fE;sp.textContent=fn(S[key]);}
+  }else if(e.target.type==="number"){S[key]=parseFloat(e.target.value)||0;save();}
   else{S[key]=e.target.value;save();}
 });
 document.addEventListener("change",function(e){
