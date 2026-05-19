@@ -237,6 +237,7 @@ function render(){
     o=o+'<div class="cd"><div class="tt">Box 3</div>'+ip("Vrijstelling","box3Drempel","EUR")+'<div class="nb">Alleenstaand: 57.000 | Samen: 114.000</div>'+ip("Fictief rendement","box3Fictief","%",0.01)+ip("Tarief","box3Tarief","%")+'</div>';
     o=o+'<div class="cd"><div class="tt">Overig</div>'+ip("Inflatie","inflatie","%",0.1)+ip("Onttrekking-%","onttrekkingsPct","%",0.1)+'<div class="nb">3-4% geldt als veilige onttrekkingsratio</div></div>';
     o=o+'</div>';
+    o=o+'<div style="text-align:center;margin-top:8px"><button id="clrBtn" style="background:none;border:1px solid #30363d;border-radius:6px;color:#8b949e;font-family:inherit;font-size:11px;padding:8px 16px;cursor:pointer">Wis opgeslagen gegevens</button></div>';
   }
 
   if(S.tab==="modellen"){
@@ -284,6 +285,7 @@ function render(){
 }
 
 document.addEventListener("click",function(e){
+  if(e.target&&e.target.id==="clrBtn"){if(confirm("Alle opgeslagen gegevens wissen?")){localStorage.removeItem("btc_planner");location.reload();}return;}
   if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;save();render();}}
 });
 document.addEventListener("input",function(e){
