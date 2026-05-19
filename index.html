@@ -167,7 +167,7 @@ function mksvg(data,series,h,useLog,refs){
   function x(a){return PL+(a-mna)/(mxa-mna)*cw;}
   function y(val){var vv=useLog?Math.log10(Math.max(val,1)):val;return PT+ch-(vv-mn)/(mx-mn)*ch;}
 
-  var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;height:auto;display:block">';
+  var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
   for(i=0;i<=5;i++){var gy=PT+ch*i/5;var rv=useLog?Math.pow(10,mx-(mx-mn)*i/5):mx-(mx-mn)*i/5;
     s=s+'<line x1="'+PL+'" y1="'+gy+'" x2="'+(W-PR)+'" y2="'+gy+'" stroke="#30363d" stroke-width="0.5"/>';
     s=s+'<text x="'+(PL-4)+'" y="'+(gy+3)+'" fill="#8b949e" font-size="7" text-anchor="end" font-family="monospace">'+fE(rv)+'</text>';}
