@@ -236,9 +236,19 @@ function render(){
     o=o+'</select>';if(S.prijsModel==="custom")o=o+ip("Groei/jr","customGroei","%");o=o+'</div>';
     o=o+'<div class="cd"><div class="tt">Inkomen netto/mnd</div>'+ip("Jij","inkomenZelf","EUR")+ip("Partner","inkomenPartner","EUR")+ip("Loonsverhoging/jr","loonsverhogingPct","%")+'</div>';
     o=o+'<div class="cd"><div class="tt">Hypotheek</div>'+ip("Per maand","hypotheekMaand","EUR")+ip("Aflossingsvrij","hypotheekAflossingsvrij","EUR")+ip("Jaren rest","hypotheekJarenRest")+ip("Schuld","hypotheekSchuld","EUR")+'</div>';
-    o=o+'<div class="cd"><div class="tt">Kinderen ('+KIN.length+')</div><table style="margin-bottom:10px"><tr><th>Kind</th><th>Nu</th><th>Zorg</th><th>KB</th></tr>';
-    for(var ki2=0;ki2<KIN.length;ki2++){var kd=KIN[ki2];o=o+'<tr><td>'+kd.l+'</td><td>'+kd.a+'j</td><td>'+(kd.c*100)+'%</td><td>'+(kd.e?'✓':'–')+'</td></tr>';}
-    o=o+'</table>'+ip("Uit huis leeftijd","kindUitHuisLeeftijd")+ip("Kosten/kind/mnd","kostenPerKindMaand","EUR")+'</div>';
+    var is='font-size:11px;padding:3px 5px;';
+    o=o+'<div class="cd"><div class="tt">Kinderen</div><table style="margin-bottom:10px;width:100%"><tr><th>Naam</th><th>Lft</th><th>Zorg</th><th>KB</th><th></th></tr>';
+    for(var ki2=0;ki2<KIN.length;ki2++){var kd=KIN[ki2];
+      o=o+'<tr>';
+      o=o+'<td><input class="ip" type="text" style="'+is+'" value="'+kd.l+'" data-kin-idx="'+ki2+'" data-kin-field="l"></td>';
+      o=o+'<td><input class="ip" type="number" style="'+is+'width:46px" value="'+kd.a+'" data-kin-idx="'+ki2+'" data-kin-field="a"></td>';
+      o=o+'<td><select class="ip" style="'+is+'" data-kin-idx="'+ki2+'" data-kin-field="c"><option value="0.5"'+(kd.c===0.5?' selected':'')+'>50%</option><option value="1"'+(kd.c===1?' selected':'')+'>100%</option></select></td>';
+      o=o+'<td style="text-align:center"><input type="checkbox"'+(kd.e?' checked':'')+' data-kin-idx="'+ki2+'" data-kin-field="e"></td>';
+      o=o+'<td><button data-kin-del="'+ki2+'" style="background:none;border:none;color:#f85149;cursor:pointer;font-size:14px;padding:0 4px">×</button></td>';
+      o=o+'</tr>';}
+    o=o+'</table>';
+    o=o+'<button id="kinAdd" style="background:none;border:1px solid #30363d;border-radius:4px;color:#8b949e;font-family:inherit;font-size:11px;padding:4px 10px;cursor:pointer;margin-bottom:8px">+ Kind toevoegen</button>';
+    o=o+ip("Uit huis leeftijd","kindUitHuisLeeftijd")+ip("Kosten/kind/mnd","kostenPerKindMaand","EUR")+'</div>';
     o=o+'<div class="cd"><div class="tt">Jouw pensioen</div>'+ip("AOW bruto/jr","aowBrutoJaar","EUR")+ip("AOW leeftijd","aowLeeftijd","",0.25)+ip("Werkgever bruto/jr","pensioenWerkgever","EUR")+ip("Werkgever vanaf lft","pensioenWerkgeverLeeftijd")+'</div>';
     o=o+'<div class="cd"><div class="tt">Partner pensioen</div>'+ip("Leeftijd partner","partnerLeeftijd")+ip("AOW partner/jr","partnerAowBrutoJaar","EUR")+ip("AOW lft partner","partnerAowLeeftijd","",0.25)+ip("Werkgever/jr","partnerPensioenWerkgever","EUR")+ip("Werkgever lft","partnerPensioenWerkgeverLeeftijd")+ip("Extra pensioen/jr","partnerPensioenExtra","EUR")+ip("Extra lft","partnerPensioenExtraLeeftijd")+'</div>';
     o=o+'<div class="cd"><div class="tt">Box 3</div>'+ip("Vrijstelling","box3Drempel","EUR")+'<div class="nb">Alleenstaand: 57.000 | Samen: 114.000</div>'+ip("Fictief rendement","box3Fictief","%",0.01)+ip("Tarief","box3Tarief","%")+'</div>';
@@ -293,11 +303,26 @@ function render(){
 
 document.addEventListener("click",function(e){
   if(e.target&&e.target.id==="clrBtn"){if(confirm("Alle opgeslagen gegevens wissen?")){localStorage.removeItem("btc_planner_v2");localStorage.removeItem("btc_planner_kin");location.reload();}return;}
+  if(e.target&&e.target.id==="kinAdd"){KIN.push({l:"Kind "+(KIN.length+1),a:10,c:0.5,e:false});saveKin();render();return;}
+  var kd2=e.target&&e.target.getAttribute?e.target.getAttribute("data-kin-del"):null;
+  if(kd2!==null){KIN.splice(parseInt(kd2),1);saveKin();render();return;}
   if(e.target&&e.target.getAttribute){var t=e.target.getAttribute("data-tab");if(t){S.tab=t;save();render();}}
 });
 var fmtFns={fE:fE,fB:fB,fP:fP};
+function kinUpdate(e,doRender){
+  var idx=parseInt(e.target.getAttribute("data-kin-idx"));
+  var fld=e.target.getAttribute("data-kin-field");
+  if(isNaN(idx)||!fld)return false;
+  if(fld==="l")KIN[idx].l=e.target.value;
+  else if(fld==="a")KIN[idx].a=parseInt(e.target.value)||0;
+  else if(fld==="c")KIN[idx].c=parseFloat(e.target.value)||0.5;
+  else if(fld==="e")KIN[idx].e=e.target.checked;
+  saveKin();if(doRender)render();return true;
+}
 document.addEventListener("input",function(e){
-  if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
+  if(!e.target||!e.target.getAttribute)return;
+  if(e.target.getAttribute("data-kin-idx")!==null){kinUpdate(e,false);return;}
+  var key=e.target.getAttribute("data-key");if(!key)return;
   if(e.target.type==="range"){
     S[key]=parseFloat(e.target.value)||0;save();
     var sp=document.getElementById("sld_"+key);
@@ -306,7 +331,9 @@ document.addEventListener("input",function(e){
   else{S[key]=e.target.value;save();}
 });
 document.addEventListener("change",function(e){
-  if(!e.target||!e.target.getAttribute)return;var key=e.target.getAttribute("data-key");if(!key)return;
+  if(!e.target||!e.target.getAttribute)return;
+  if(e.target.getAttribute("data-kin-idx")!==null){kinUpdate(e,true);return;}
+  var key=e.target.getAttribute("data-key");if(!key)return;
   if(e.target.tagName==="SELECT"){S[key]=e.target.value;}else{S[key]=parseFloat(e.target.value)||0;}save();render();
 });
 
